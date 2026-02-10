@@ -56,5 +56,3 @@ Este projeto é uma aplicação web moderna desenvolvida para visualizar e filtr
 -   `/lib`: Lógica de processamento da planilha (`schedule.ts`).
 -   `/scripts`: Scripts de verificação e teste de dados.
 
----
-**Nota**: A pasta `anexos` contém arquivos de referência originais e pode ser removida se não for mais necessária, pois o sistema busca os dados online.
