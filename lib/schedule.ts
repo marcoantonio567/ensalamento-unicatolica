@@ -31,63 +31,58 @@ export interface ClassSession {
 const SPREADSHEET_URL = 'https://ubecedu-my.sharepoint.com/:x:/g/personal/raimara_rodrigues_catolica-to_edu_br/IQALA5Yo0JsZSr3JBJO6Lkq7ARYkehG7oWHVfgsnM9aQaSM?download=1';
 
 async function downloadFile(url: string, outputPath: string): Promise<void> {
-    console.log(`Launching Browser to download spreadsheet to ${outputPath}...`);
+    console.log(`[Method: Fetch-in-Page] Downloading spreadsheet to ${outputPath}...`);
     let browser = null;
     try {
         browser = await getBrowser();
         const page = await browser.newPage();
 
-        const client = await page.createCDPSession();
-        await client.send('Page.setDownloadBehavior', {
-            behavior: 'allow',
-            downloadPath: path.dirname(outputPath)
-        });
+        // Disable cache to ensure freshness
+        await page.setCacheEnabled(false);
 
-        console.log(`Navigating to ${url}...`);
-        const dir = path.dirname(outputPath);
+        console.log(`Navigating to about:blank to start context...`);
+        // We go to a neutral page or the domain? 
+        // Since we disabled web security in chromium.ts logic, about:blank should allow fetch to anywhere.
+        await page.goto('about:blank');
 
-        const initialFiles = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        console.log(`Executing fetch inside page context for: ${url}`);
 
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-
-        console.log('Waiting for download to complete...');
-        let downloadedFile: string | null = null;
-
-        for (let i = 0; i < 30; i++) {
-            await new Promise(r => setTimeout(r, 1000));
-            if (!fs.existsSync(dir)) continue; // verification
-            const currentFiles = fs.readdirSync(dir);
-            const newFile = currentFiles.find(f => !initialFiles.includes(f) && f.endsWith('.xlsx'));
-            if (newFile) {
-                downloadedFile = path.join(dir, newFile);
-                break;
+        // Fetch the file as a binary blob, convert to base64, and return
+        // This leverages the browser's networking stack (and any cookies if we needed them, though this is a guest link)
+        const base64Data = await page.evaluate(async (targetUrl) => {
+            const response = await fetch(targetUrl);
+            if (!response.ok) {
+                throw new Error(`Fetch failed with status: ${response.status}`);
             }
+            const blob = await response.blob();
+            return new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    // result looks like "data:application/vnd....;base64,....."
+                    resolve(result);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }, url);
+
+        console.log('Fetch successful. Processing data...');
+
+        // Remove the data URL prefix (e.g., "data:application/octet-stream;base64,")
+        const base64Content = base64Data.split(',')[1];
+        if (!base64Content) {
+            throw new Error('Invalid base64 data received.');
         }
 
-        if (downloadedFile) {
-            console.log(`Downloaded file detected: ${downloadedFile}`);
-            await new Promise(r => setTimeout(r, 1000));
+        const buffer = Buffer.from(base64Content, 'base64');
 
-            try {
-                if (fs.existsSync(outputPath) && downloadedFile !== outputPath) {
-                    fs.unlinkSync(outputPath);
-                }
-
-                if (downloadedFile !== outputPath) {
-                    fs.copyFileSync(downloadedFile, outputPath);
-                    fs.unlinkSync(downloadedFile);
-                }
-            } catch (err) {
-                console.error('Error moving file:', err);
-            }
-            console.log(`Saved to ${outputPath}`);
-        } else {
-            console.warn('Timeout: No new .xlsx file detected.');
-        }
+        // Write to file
+        fs.writeFileSync(outputPath, buffer);
+        console.log(`Saved ${buffer.length} bytes to ${outputPath}`);
 
     } catch (error) {
-        console.error('Puppeteer navigation error:', error);
+        console.error('Puppeteer/Fetch error:', error);
     } finally {
         if (browser) await browser.close();
     }
