@@ -6,14 +6,18 @@ export async function getBrowser() {
     let browser;
 
     if (process.env.NODE_ENV === 'production') {
+        const chromium = require('@sparticuz/chromium');
         // Vercel / Production
+        console.log('--- Vercel Chromium Setup ---');
+        console.log(`@sparticuz/chromium path: ${await chromium.executablePath()}`);
+
         chromium.setGraphicsMode = false;
 
         browser = await puppeteer.launch({
             args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
             defaultViewport: { width: 1920, height: 1080 },
             executablePath: await chromium.executablePath(),
-            headless: true, // Hardcode to true to avoid type issues with chromium.headless
+            headless: true, // Hardcode to true to avoid type issues
         });
     } else {
         // Local Development
