@@ -2,14 +2,12 @@
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import { getBrowser } from './chromium';
 
 // Determine Environment
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Use /tmp for Vercel, or local path for dev
-// Vercel only allows writing to /tmp
 const LOCAL_FILE = isProduction
     ? path.join('/tmp', 'schedule_cache.xlsx')
     : path.resolve(process.cwd(), 'schedule_cache.xlsx');
@@ -32,47 +30,6 @@ export interface ClassSession {
 
 const SPREADSHEET_URL = 'https://ubecedu-my.sharepoint.com/:x:/g/personal/raimara_rodrigues_catolica-to_edu_br/IQALA5Yo0JsZSr3JBJO6Lkq7ARYkehG7oWHVfgsnM9aQaSM?download=1';
 
-async function getBrowser() {
-    let browser;
-    if (isProduction) {
-        // Vercel / Production
-        console.log('Launching Chromium for Vercel...');
-        /* 
-           NOTE: You must add the following to your package.json dependencies:
-           "puppeteer-core": "^24.0.0",
-           "@sparticuz/chromium": "^133.0.0" (check latest versions compatible)
-        */
-        chromium.setGraphicsMode = false;
-        browser = await puppeteer.launch({
-            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
-        });
-    } else {
-        // Local Dev: Try to use local Chrome or installed puppeteer
-        console.log('Launching Local Chrome...');
-        try {
-            // Need 'puppeteer' (full) for local dev usually, or point to executable
-            // Since we might not want 'puppeteer' full dep in production to save space, 
-            // we can try to find local chrome.
-            const { executablePath } = require('puppeteer'); // This requires 'puppeteer' in devDeps
-            browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                headless: true,
-                executablePath: executablePath(),
-            });
-        } catch (e) {
-            // Fallback: try standard launch if puppeteer is in node_modules
-            browser = await puppeteer.launch({
-                channel: 'chrome',
-                headless: true
-            });
-        }
-    }
-    return browser;
-}
-
 async function downloadFile(url: string, outputPath: string): Promise<void> {
     console.log(`Launching Browser to download spreadsheet to ${outputPath}...`);
     let browser = null;
@@ -89,9 +46,6 @@ async function downloadFile(url: string, outputPath: string): Promise<void> {
         console.log(`Navigating to ${url}...`);
         const dir = path.dirname(outputPath);
 
-        // Initial file check
-        // In /tmp we might not find previous files easily or they might persist briefly.
-        // We'll trust the "new file appeared" logic or check file mtime.
         const initialFiles = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -100,13 +54,10 @@ async function downloadFile(url: string, outputPath: string): Promise<void> {
         console.log('Waiting for download to complete...');
         let downloadedFile: string | null = null;
 
-        // Wait loop
         for (let i = 0; i < 30; i++) {
             await new Promise(r => setTimeout(r, 1000));
+            if (!fs.existsSync(dir)) continue; // verification
             const currentFiles = fs.readdirSync(dir);
-            // Look for a new .xlsx file or simply *any* .xlsx if we assume clean /tmp
-            // But Sharepoint might name it unpredictable.
-            // Best bet: finding a file that wasn't there, or the one with latest mtime.
             const newFile = currentFiles.find(f => !initialFiles.includes(f) && f.endsWith('.xlsx'));
             if (newFile) {
                 downloadedFile = path.join(dir, newFile);
@@ -116,13 +67,9 @@ async function downloadFile(url: string, outputPath: string): Promise<void> {
 
         if (downloadedFile) {
             console.log(`Downloaded file detected: ${downloadedFile}`);
-            // Resize / Rename
-            // We need to move it to outputPath (schedule_cache.xlsx)
-            // Note: outputPath might be same as downloadedFile if we are lucky with name, but unlikely.
-            await new Promise(r => setTimeout(r, 1000)); // wait for write finish
+            await new Promise(r => setTimeout(r, 1000));
 
             try {
-                // If target exists, delete it first
                 if (fs.existsSync(outputPath) && downloadedFile !== outputPath) {
                     fs.unlinkSync(outputPath);
                 }
