@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Visualizador de Horários e Ensalamento - Católica do Tocantins 🎓
 
-## Getting Started
+Este projeto é uma aplicação web moderna desenvolvida para visualizar e filtrar os horários de aulas e ensalamento do Centro Universitário Católica do Tocantins. Ele consome dados diretamente de uma planilha Excel hospedada no SharePoint, garantindo que as informações estejam sempre sincronizadas com a coordenação.
 
-First, run the development server:
+## 🚀 Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+-   **Atualização em Tempo Real**: Os dados são baixados automaticamente do link oficial do SharePoint a cada acesso, garantindo que qualquer alteração na planilha online seja refletida imediatamente.
+-   **Visualização Clara**: Cards organizados com informações essenciais: Disciplina, Professor, Horário, Local (Campus, Bloco, Sala) e Turma.
+-   **Filtros Inteligentes**:
+    -   **Curso**: Selecione seu curso para ver apenas as aulas relevantes.
+    -   **Turno**: Filtre rapidamente por Manhã, Tarde ou Noite.
+    -   **Dia e Período**: Refine sua busca para encontrar aulas específicas.
+-   **Tratamento de Dados Avancado**:
+    -   Reconhecimento automático de **Campus I e II**.
+    -   Identificação de **Blocos** e **Salas**.
+    -   Suporte para aulas **Quinzenais**.
+    -   Correção automática de células mescladas (períodos).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tecnologias Utilizadas
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+-   **Frontend**: [Next.js](https://nextjs.org/) (React Framework), TypeScript, Tailwind CSS.
+-   **UI Components**: [Shadcn/ui](https://ui.shadcn.com/) para uma interface limpa e acessível.
+-   **Backend (API Route)**: Node.js com `puppeteer` para automação de download e `xlsx` para processamento de planilhas.
+-   **Ícones**: Lucide React.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ Como Funciona (Por Baixo dos Panos)
 
-## Learn More
+1.  **Conexão**: Ao abrir a página, o servidor inicia uma instância segura do navegador (Puppeteer).
+2.  **Download**: Ele navega até o link público do SharePoint e baixa a versão mais recente da planilha `.xlsx`.
+3.  **Processamento**: O sistema lê todas as 19+ abas (Cursos), limpa linhas vazias, preenche células mescladas e normaliza os dados (ex: define sábado como "Manhã" por padrão se não especificado).
+4.  **Exibição**: Os dados processados são enviados para a interface, onde você pode filtrar e visualizar.
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Instalação e Execução
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Pré-requisitos
+-   Node.js 18+ instalado.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Passos
+1.  Clone o repositório ou baixe os arquivos.
+2.  Instale as dependências:
+    ```bash
+    npm install
+    # ou
+    yarn install
+    ```
+3.  Execute o servidor de desenvolvimento:
+    ```bash
+    npm run dev
+    ```
+4.  Acesse `http://localhost:3000` no seu navegador.
 
-## Deploy on Vercel
+## 📂 Estrutura de Pastas Importante
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+-   `/app`: Páginas e Rotas da API.
+-   `/components`: Componentes visuais (Cards, Filtros).
+-   `/lib`: Lógica de processamento da planilha (`schedule.ts`).
+-   `/scripts`: Scripts de verificação e teste de dados.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+**Nota**: A pasta `anexos` contém arquivos de referência originais e pode ser removida se não for mais necessária, pois o sistema busca os dados online.
