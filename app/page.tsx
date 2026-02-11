@@ -15,7 +15,8 @@ export default function Home() {
     day: '',
     period: '',
     subject: '',
-    shift: ''
+    shift: '',
+    search: '' // New search state
   });
 
   useEffect(() => {
@@ -41,7 +42,12 @@ export default function Home() {
       const matchesSubject = !filters.subject || s.subject === filters.subject;
       const matchesShift = !filters.shift || s.shift === filters.shift;
 
-      return matchesCourse && matchesDay && matchesPeriod && matchesSubject && matchesShift;
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = !filters.search ||
+        s.subject.toLowerCase().includes(searchLower) ||
+        s.professor.toLowerCase().includes(searchLower);
+
+      return matchesCourse && matchesDay && matchesPeriod && matchesSubject && matchesShift && matchesSearch;
     });
   }, [schedule, filters]);
 

@@ -11,6 +11,9 @@ import {
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+
 interface FiltersProps {
     schedule: ClassSession[];
     filters: {
@@ -19,6 +22,7 @@ interface FiltersProps {
         period: string;
         subject: string;
         shift: string;
+        search: string;
     };
     setFilters: (filters: any) => void;
 }
@@ -34,7 +38,7 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
         const courses = Array.from(new Set(schedule.map(s => s.course).filter(Boolean))).sort();
         const days = Array.from(new Set(relevantSchedule.map(s => s.day).filter(Boolean))).sort();
         const periods = Array.from(new Set(relevantSchedule.map(s => s.period).filter(p => p && p.toLowerCase() !== 'período'))).sort();
-        const subjects = Array.from(new Set(relevantSchedule.map(s => s.subject).filter(s => s && s.toLowerCase() !== 'disciplina'))).sort();
+        // const subjects = Array.from(new Set(relevantSchedule.map(s => s.subject).filter(s => s && s.toLowerCase() !== 'disciplina'))).sort();
         const shifts = Array.from(new Set(relevantSchedule.map(s => s.shift).filter(Boolean))).sort();
 
         // Custom Sort for Days
@@ -53,7 +57,7 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
             return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
         });
 
-        return { courses, days: sortedDays, periods, subjects, shifts: sortedShifts };
+        return { courses, days: sortedDays, periods, shifts: sortedShifts };
     }, [schedule, filters.course]);
 
     const handleChange = (key: string, value: string) => {
@@ -66,7 +70,8 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
                 day: '',
                 period: '',
                 subject: '',
-                shift: ''
+                shift: '',
+                search: ''
             });
         } else {
             setFilters((prev: any) => ({ ...prev, [key]: finalValue }));
@@ -74,15 +79,15 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
     };
 
     const clearFilters = () => {
-        setFilters({ course: '', day: '', period: '', subject: '', shift: '' });
+        setFilters({ course: '', day: '', period: '', subject: '', shift: '', search: '' });
     };
 
     return (
         <div className="bg-slate-900 border border-blue-900/50 rounded-xl p-6 mb-8 shadow-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
-                {/* Course Filter (Primary - Wider) */}
-                <div className="space-y-2 lg:col-span-2">
+            {/* Top Row: Course and Search */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="space-y-2">
                     <Label htmlFor="course-filter" className="text-blue-200">Curso</Label>
                     <Select value={filters.course} onValueChange={(v) => handleChange('course', v)}>
                         <SelectTrigger id="course-filter" className="bg-slate-950 border-blue-900 text-slate-100 focus:ring-blue-500">
@@ -96,6 +101,24 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
                         </SelectContent>
                     </Select>
                 </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="search-filter" className="text-slate-400">Buscar (Disciplina ou Professor)</Label>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                        <Input
+                            id="search-filter"
+                            placeholder="Digite o nome..."
+                            className="pl-9 bg-slate-950 border-slate-800 text-slate-100 focus:ring-blue-500"
+                            value={filters.search}
+                            onChange={(e) => handleChange('search', e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Row: Secondary Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
                 {/* Period Filter */}
                 <div className="space-y-2">
@@ -113,7 +136,7 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
                     </Select>
                 </div>
 
-                {/* Shift Filter (New) */}
+                {/* Shift Filter */}
                 <div className="space-y-2">
                     <Label htmlFor="shift-filter" className="text-slate-400">Turno</Label>
                     <Select value={filters.shift} onValueChange={(v) => handleChange('shift', v)}>
