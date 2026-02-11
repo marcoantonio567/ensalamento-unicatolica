@@ -2,22 +2,71 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { fetchSchedule, ClassSession } from "@/lib/schedule";
+import { ClassSession } from "@/lib/schedule";
 import { ScheduleCard } from "@/components/ScheduleCard";
 import { Filters } from "@/components/Filters";
 import { Loader2, Github, Linkedin } from "lucide-react";
+import { LOCAL_STORAGE_KEYS } from "@/constants/localStorage";
+import { getLocalStorageItem, setLocalStorageItem } from "@/lib/localStorage";
+
+type ScheduleFilters = {
+  course: string;
+  day: string;
+  period: string;
+  subject: string;
+  shift: string;
+  search: string;
+};
+
+const DEFAULT_FILTERS: ScheduleFilters = {
+  course: "",
+  day: "",
+  period: "",
+  subject: "",
+  shift: "",
+  search: "",
+};
+
+function isValidScheduleFilters(value: unknown): value is ScheduleFilters {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.course === "string" &&
+    typeof candidate.day === "string" &&
+    typeof candidate.period === "string" &&
+    typeof candidate.subject === "string" &&
+    typeof candidate.shift === "string" &&
+    typeof candidate.search === "string"
+  );
+}
 
 export default function Home() {
   const [schedule, setSchedule] = useState<ClassSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    course: '',
-    day: '',
-    period: '',
-    subject: '',
-    shift: '',
-    search: '' // New search state
-  });
+  const [filters, setFilters] = useState<ScheduleFilters>(DEFAULT_FILTERS);
+  const [isFiltersHydrated, setIsFiltersHydrated] = useState(false);
+
+  useEffect(() => {
+    const savedFilters = getLocalStorageItem<ScheduleFilters>(LOCAL_STORAGE_KEYS.SCHEDULE_FILTERS);
+
+    if (savedFilters && isValidScheduleFilters(savedFilters)) {
+      setFilters(savedFilters);
+    }
+
+    setIsFiltersHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isFiltersHydrated) {
+      return;
+    }
+
+    setLocalStorageItem(LOCAL_STORAGE_KEYS.SCHEDULE_FILTERS, filters);
+  }, [filters, isFiltersHydrated]);
 
   useEffect(() => {
     async function loadData() {
