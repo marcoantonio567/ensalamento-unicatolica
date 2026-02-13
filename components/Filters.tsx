@@ -1,6 +1,6 @@
 
 import { ClassSession } from '@/lib/schedule';
-import { useMemo } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import {
     Select,
     SelectContent,
@@ -16,16 +16,18 @@ import { Search } from "lucide-react"
 
 interface FiltersProps {
     schedule: ClassSession[];
-    filters: {
-        course: string;
-        day: string;
-        period: string;
-        subject: string;
-        shift: string;
-        search: string;
-    };
-    setFilters: (filters: any) => void;
+    filters: FiltersState;
+    setFilters: Dispatch<SetStateAction<FiltersState>>;
 }
+
+type FiltersState = {
+    course: string;
+    day: string;
+    period: string;
+    subject: string;
+    shift: string;
+    search: string;
+};
 
 export function Filters({ schedule, filters, setFilters }: FiltersProps) {
 
@@ -60,7 +62,7 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
         return { courses, days: sortedDays, periods, shifts: sortedShifts };
     }, [schedule, filters.course]);
 
-    const handleChange = (key: string, value: string) => {
+    const handleChange = (key: keyof FiltersState, value: string) => {
         const finalValue = value === "all" ? "" : value;
 
         if (key === 'course') {
@@ -74,7 +76,7 @@ export function Filters({ schedule, filters, setFilters }: FiltersProps) {
                 search: ''
             });
         } else {
-            setFilters((prev: any) => ({ ...prev, [key]: finalValue }));
+            setFilters((prev) => ({ ...prev, [key]: finalValue }));
         }
     };
 
