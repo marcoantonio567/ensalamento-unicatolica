@@ -12,26 +12,28 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
     return (
         <Card className="border-l-4 border-l-blue-600 shadow-sm hover:shadow-md transition-shadow bg-slate-950 text-slate-100 border-slate-800">
             <CardHeader className="pb-2">
-                <div className="flex justify-between items-start gap-2">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                            {session.course}
-                        </span>
-                        <CardTitle className="text-lg font-bold leading-tight">
-                            {session.subject}
-                        </CardTitle>
+                <div className="flex flex-col justify-between gap-4">
+                    <div className="flex justify-between items-start gap-2">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                                {session.course}
+                            </span>
+                        </div>
+                        {session.period && (
+                            <Badge variant="outline" className="shrink-0 bg-blue-950/30 text-blue-200 border-blue-800">
+                                {session.period}
+                            </Badge>
+                        )}
                     </div>
-                    {session.period && (
-                        <Badge variant="outline" className="shrink-0 bg-blue-950/30 text-blue-200 border-blue-800">
-                            {session.period}
-                        </Badge>
-                    )}
+                    <CardTitle className="text-lg font-bold leading-tight">
+                        {session.subject}
+                    </CardTitle>
                 </div>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
 
                 {/* Professor & Turma */}
-                <div className="flex items-center justify-between text-slate-300">
+                <div className="flex items-center justify-between gap-2 text-slate-300">
                     <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-slate-500" />
                         <span className="font-medium">{session.professor}</span>
