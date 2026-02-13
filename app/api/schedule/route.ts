@@ -13,7 +13,10 @@ export async function GET() {
         // 2. Check Internal Cache (Fastest)
         if (cachedData && (now - lastFetchTime < CACHE_DURATION)) {
             console.log('Serving from internal memory cache');
-            return NextResponse.json(cachedData, {
+            return NextResponse.json({
+                schedule: cachedData,
+                lastUpdated: lastFetchTime
+            }, {
                 headers: {
                     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
                     'X-Cache': 'HIT-MEMORY'
@@ -33,7 +36,10 @@ export async function GET() {
         // 3. Return with Edge Cache Headers (CDN Protection)
         // s-maxage=300: Vercel Edge Cache holds it for 5min (Backends sleeps)
         // stale-while-revalidate=600: If expired, serve old data for 10 more min while fetching new in background
-        return NextResponse.json(schedule, {
+        return NextResponse.json({
+            schedule: schedule,
+            lastUpdated: lastFetchTime
+        }, {
             headers: {
                 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
                 'X-Cache': 'MISS'
@@ -44,7 +50,11 @@ export async function GET() {
         console.error('API Error:', error);
         // If error, try to serve stale cache as failover
         if (cachedData) {
-            return NextResponse.json(cachedData, {
+            return NextResponse.json({
+                schedule: cachedData,
+                lastUpdated: lastFetchTime,
+                error: "Serving stale data due to fetch error"
+            }, {
                 headers: { 'X-Status': 'Fallback' }
             });
         }

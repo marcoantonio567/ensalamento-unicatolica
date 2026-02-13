@@ -262,10 +262,16 @@ export async function fetchSchedule(): Promise<ClassSession[]> {
             }
         });
 
+        // Validation: If we parsed all sheets and got 0 classes, something is wrong with the credentials or the layout.
+        if (schedule.length === 0) {
+            throw new Error("No classes parsed from the spreadsheet. The file layout might have changed or the file is empty.");
+        }
+
         return schedule;
 
     } catch (error) {
         console.error('Error fetching schedule:', error);
-        return [];
+        // Rethrow the error so the API route knows it failed, instead of returning strict empty array
+        throw error;
     }
 }

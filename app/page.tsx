@@ -47,6 +47,7 @@ function isValidScheduleFilters(value: unknown): value is ScheduleFilters {
 export default function Home() {
   const [schedule, setSchedule] = useState<ClassSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [filters, setFilters] = useState<ScheduleFilters>(DEFAULT_FILTERS);
   const [isFiltersHydrated, setIsFiltersHydrated] = useState(false);
 
@@ -73,7 +74,13 @@ export default function Home() {
       try {
         const response = await fetch('/api/schedule');
         const data = await response.json();
-        setSchedule(data);
+        // Handle both old array format (just in case of cache weirdness) and new object format
+        if (Array.isArray(data)) {
+          setSchedule(data);
+        } else {
+          setSchedule(data.schedule || []);
+          setLastUpdated(data.lastUpdated);
+        }
       } catch (error) {
         console.error("Failed to load schedule", error);
       } finally {
@@ -108,6 +115,16 @@ export default function Home() {
             Centro Universitário Católica do Tocantins
           </h1>
           <p className="text-slate-400 text-lg">Ensalamento e Horários 2026/1</p>
+          {lastUpdated && (
+            <p className="text-xs text-blue-400 mt-2 font-mono bg-blue-950/30 inline-block px-3 py-1 rounded-full border border-blue-900/50">
+              ⚡ Atualizado: {new Date(lastUpdated).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
         </header>
 
         {loading ? (
