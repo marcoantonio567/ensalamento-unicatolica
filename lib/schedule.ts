@@ -88,6 +88,18 @@ async function downloadFile(url: string, outputPath: string): Promise<void> {
     }
 }
 
+// Helper to normalize text to Title Case (Portuguese)
+function toTitleCase(str: string) {
+    const lower = str.toLowerCase();
+    const exceptions = ['de', 'da', 'do', 'dos', 'das', 'e', 'em', 'na', 'no', 'para', 'por'];
+    return lower.split(' ').map((word, index) => {
+        if (exceptions.includes(word) && index !== 0) {
+            return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+}
+
 export async function fetchSchedule(): Promise<ClassSession[]> {
     try {
         await downloadFile(SPREADSHEET_URL, LOCAL_FILE);
@@ -162,7 +174,9 @@ export async function fetchSchedule(): Promise<ClassSession[]> {
                     if (!row || row.length === 0) continue;
 
                     const getValue = (idx: number) => (idx >= 0 && row[idx] !== undefined && row[idx] !== null ? row[idx].toString().trim() : '');
-                    const course = sheetName.trim();
+
+                    // Normalize course name (Title Case)
+                    const course = toTitleCase(sheetName.trim());
 
                     let period = getValue(colMap.period);
                     let subject = getValue(colMap.subject);
