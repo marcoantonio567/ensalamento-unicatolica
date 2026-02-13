@@ -9,7 +9,8 @@ const WINDOW_SIZE = 60 * 1000; // 1 minute
 const LIMIT = 20; // 20 requests per minute per IP
 
 export function middleware(request: NextRequest) {
-    const ip = request.ip || '127.0.0.1';
+    // Fix: Access IP via headers or fallback (Vercel/Next.js specific handling)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
 
     // 1. Rate Limiting Logic
     const now = Date.now();
