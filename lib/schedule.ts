@@ -108,7 +108,8 @@ export async function fetchSchedule(): Promise<ClassSession[]> {
         workbook.SheetNames.forEach(sheetName => {
             try {
                 const sheet = workbook.Sheets[sheetName];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+                // Use raw: false to get formatted strings (preserves 1.10 as "1.10" instead of 1.1)
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' }) as any[][];
 
                 if (!rows || rows.length < 2) return;
 
